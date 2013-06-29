@@ -32,6 +32,12 @@ class CommandRunner(threading.Thread):
             self.callback(result)
 
 
+class SnitchclearCommand(sublime_plugin.TextCommand):
+    def run(self, edit):
+        print('clearing')
+        self.view.erase_status('sublime_snitch')
+
+
 class SnitchCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         self.snitch_line = self.get_line_number()

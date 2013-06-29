@@ -2,5 +2,9 @@
     {
         "caption": "Snitch Current Line",
         "command": "snitch"
+    },
+    {
+        "caption": "Snitch Clear",
+        "command": "snitchclear"
     }
 ]
