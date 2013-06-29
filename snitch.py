@@ -5,8 +5,8 @@ import os
 import re
 import threading
 import subprocess
-import shlex
-import sublime, sublime_plugin
+import sublime
+import sublime_plugin
 
 
 class CommandRunner(threading.Thread):
@@ -26,8 +26,9 @@ class CommandRunner(threading.Thread):
             os.chdir(self.working_dir)
             output = subprocess.check_output(self.command, shell=True)
             result = output.decode("utf-8").strip()
-        except Exception as e:
+        except Exception:
             result = None
+
         if self.callback:
             self.callback(result)
 
@@ -70,7 +71,6 @@ class SnitchCommand(sublime_plugin.TextCommand):
                 self.apply_blame(matches.group(1))
 
     def apply_blame(self, blame_target):
-        view = self.active_view()
         s = 'Snitch: Blame line {line} on {name}!'.format(
             line=self.snitch_line,
             name=blame_target)
