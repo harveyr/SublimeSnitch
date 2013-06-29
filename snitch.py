@@ -34,7 +34,6 @@ class CommandRunner(threading.Thread):
 
 class SnitchclearCommand(sublime_plugin.TextCommand):
     def run(self, edit):
-        print('clearing')
         self.view.erase_status('sublime_snitch')
 
 
@@ -59,7 +58,6 @@ class SnitchCommand(sublime_plugin.TextCommand):
 
     def hg_callback(self, output):
         if output:
-            # print('hg_callback result: ' + output)
             target_line = output.splitlines()[self.snitch_line - 1]
             matches = re.match(r'(\s*?\w.*)\s<', target_line)
             if matches:
@@ -67,9 +65,7 @@ class SnitchCommand(sublime_plugin.TextCommand):
 
     def git_callback(self, output):
         if output:
-            print('git_callback result: ' + output)
             matches = re.match(r'\w+\s\((.*?)\s\d+', output)
-            print('matches: {}'.format(matches))
             if matches:
                 self.apply_blame(matches.group(1))
 
@@ -79,11 +75,6 @@ class SnitchCommand(sublime_plugin.TextCommand):
             line=self.snitch_line,
             name=blame_target)
         self.view.set_status('sublime_snitch', s)
-
-
-    def current_scope(self):
-        print(self.active_view().scope_name(0))
-        return self.active_view().scope_name(0)
 
     def active_view(self):
         return sublime.active_window().active_view()
