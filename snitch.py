@@ -40,6 +40,7 @@ class SnitchclearCommand(sublime_plugin.TextCommand):
 
 class SnitchCommand(sublime_plugin.TextCommand):
     def run(self, edit):
+        print('Snitching...')
         self.snitch_line = self.get_line_number()
         file_path = self.active_view().file_name()
         working_dir, filename = os.path.split(file_path)
@@ -60,17 +61,22 @@ class SnitchCommand(sublime_plugin.TextCommand):
     def hg_callback(self, output):
         if output:
             target_line = output.splitlines()[self.snitch_line - 1]
-            matches = re.match(r'(\s*?\w.*)\s<', target_line)
+            matches = re.match(r'\s*(\w+)\s\d+', target_line)
             if matches:
                 self.apply_blame(matches.group(1).strip())
+            else:
+                print('SublimeSnitch: no mercurial matches')
 
     def git_callback(self, output):
         if output:
             matches = re.match(r'\w+\s\((.*?)\s\d+', output)
             if matches:
                 self.apply_blame(matches.group(1))
+            else:
+                print('SublimeSnitch: no git matches')
 
     def apply_blame(self, blame_target):
+        print("Snitching on %s" % blame_target)
         s = 'Snitch: Blame line {line} on {name}!'.format(
             line=self.snitch_line,
             name=blame_target)
