@@ -61,11 +61,14 @@ class SnitchCommand(sublime_plugin.TextCommand):
     def hg_callback(self, output):
         if output:
             target_line = output.splitlines()[self.snitch_line - 1]
-            matches = re.match(r'\s*(\w+)\s\d+', target_line)
-            if matches:
-                self.apply_blame(matches.group(1).strip())
-            else:
-                print('SublimeSnitch: no mercurial matches')
+            patterns = [r'(\s*?\w.*)\s<', r'\s*(\w+)\s\d+']
+            for p in patterns:
+                matches = re.match(p, target_line)
+                if matches:
+                    self.apply_blame(matches.group(1).strip())
+                    return
+            print("SublimeSnitch: no mercurial matches for %s" %
+                  target_line)
 
     def git_callback(self, output):
         if output:
