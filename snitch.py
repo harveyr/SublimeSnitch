@@ -9,6 +9,14 @@ import sublime
 import sublime_plugin
 
 
+class SnitchSetPanelText(sublime_plugin.TextCommand):
+    def run(self, edit, text):
+        window = sublime.active_window()
+        panel = window.create_output_panel('snitch_panel')
+        panel.insert(edit, 0, text)
+        window.run_command('show_panel', {'panel': 'output.snitch_panel'})
+
+
 class CommandRunner(threading.Thread):
     def __init__(self, command_str, working_dir, callback=None, name=None):
         threading.Thread.__init__(self)
@@ -33,16 +41,11 @@ class CommandRunner(threading.Thread):
             self.callback(result)
 
 
-class SnitchclearCommand(sublime_plugin.TextCommand):
-    def run(self, edit):
-        self.view.erase_status('sublime_snitch')
-
-
 class SnitchCommand(sublime_plugin.TextCommand):
     def run(self, edit):
-        print('Snitching...')
-        self.snitch_line = self.get_line_number()
-        file_path = self.active_view().file_name()
+        rowcol = self.view.rowcol(self.view.sel()[0].begin())
+        self.snitch_line = rowcol[0] + 1
+        file_path = self.view.file_name()
         working_dir, filename = os.path.split(file_path)
         hg_cmd = 'hg annotate -l -u -n ' + filename
         git_cmd = 'git blame {f} -L {l},{l}'.format(
@@ -50,13 +53,6 @@ class SnitchCommand(sublime_plugin.TextCommand):
 
         CommandRunner(hg_cmd, working_dir, self.hg_callback)
         CommandRunner(git_cmd, working_dir, self.git_callback)
-
-    def get_line_number(self):
-        view = self.active_view()
-        self.snitch_point = view.sel()[0].a
-        point = self.snitch_point
-        rowcol = view.rowcol(point)
-        return rowcol[0] + 1
 
     def hg_callback(self, output):
         if output:
@@ -67,23 +63,16 @@ class SnitchCommand(sublime_plugin.TextCommand):
                 if matches:
                     self.apply_blame(matches.group(1).strip())
                     return
-            print("SublimeSnitch: no mercurial matches for %s" %
-                  target_line)
 
     def git_callback(self, output):
         if output:
             matches = re.match(r'\w+\s\((.*?)\s\d+', output)
             if matches:
                 self.apply_blame(matches.group(1))
-            else:
-                print('SublimeSnitch: no git matches')
 
     def apply_blame(self, blame_target):
         print("Snitching on %s" % blame_target)
         s = 'Snitch: Blame line {line} on {name}!'.format(
             line=self.snitch_line,
             name=blame_target)
-        self.view.set_status('sublime_snitch', s)
-
-    def active_view(self):
-        return sublime.active_window().active_view()
+        self.view.run_command('snitch_set_panel_text', {'text': s})
