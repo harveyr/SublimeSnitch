@@ -1,7 +1,4 @@
-# TODO: Add revision, date, etc.
-
 import os
-import re
 import threading
 import subprocess
 import sublime
