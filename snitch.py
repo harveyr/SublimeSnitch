@@ -1,5 +1,4 @@
-# http://www.sublimetext.com/docs/commands
-# http://www.sublimetext.com/docs/3/api_reference.html
+# TODO: Add revision, date, etc.
 
 import os
 import re
@@ -43,36 +42,35 @@ class CommandRunner(threading.Thread):
 
 class SnitchCommand(sublime_plugin.TextCommand):
     def run(self, edit):
-        rowcol = self.view.rowcol(self.view.sel()[0].begin())
+        selection = self.view.sel()
+        rowcol = self.view.rowcol(selection[0].begin())
         self.snitch_line = rowcol[0] + 1
+
+        self.line_count = len(self.view.lines(selection[0]))
+
         file_path = self.view.file_name()
         working_dir, filename = os.path.split(file_path)
-        hg_cmd = 'hg annotate -l -u -n ' + filename
-        git_cmd = 'git blame {f} -L {l},{l}'.format(
-            f=filename, l=self.snitch_line)
+        hg_cmd = 'hg annotate -l -u -n -c -d -q ' + filename
+        git_cmd = 'git blame {f} -L {l1},{l2}'.format(
+            f=filename,
+            l1=self.snitch_line,
+            l2=self.snitch_line + self.line_count - 1)
 
         CommandRunner(hg_cmd, working_dir, self.hg_callback)
         CommandRunner(git_cmd, working_dir, self.git_callback)
 
     def hg_callback(self, output):
         if output:
-            target_line = output.splitlines()[self.snitch_line - 1]
-            patterns = [r'(\s*?\w.*)\s<', r'\s*(\w+)\s\d+']
-            for p in patterns:
-                matches = re.match(p, target_line)
-                if matches:
-                    self.apply_blame(matches.group(1).strip())
-                    return
+            l1 = self.snitch_line - 1
+            l2 = l1 + self.line_count
+            lines = output.splitlines()[l1:l2]
+            self.apply_blame('\n'.join(lines))
 
     def git_callback(self, output):
         if output:
-            matches = re.match(r'\w+\s\((.*?)\s\d+', output)
-            if matches:
-                self.apply_blame(matches.group(1))
+            self.apply_blame(output)
 
-    def apply_blame(self, blame_target):
-        print("Snitching on %s" % blame_target)
-        s = 'Snitch: Blame line {line} on {name}!'.format(
-            line=self.snitch_line,
-            name=blame_target)
+    def apply_blame(self, results):
+        s = '[Snitch] Blame Results:\n{result}'.format(
+            result=results)
         self.view.run_command('snitch_set_panel_text', {'text': s})
