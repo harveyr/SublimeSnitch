@@ -8,3 +8,5 @@ With no selection, it blames your current line.
 Otherwise, it blames all selected lines.
 
 Results show up in the ST quick panel. 
+
+![Screenshot](https://raw.github.com/harveyr/SublimeSnitch/master/screenshot.png)
