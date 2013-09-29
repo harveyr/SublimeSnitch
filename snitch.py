@@ -68,6 +68,6 @@ class SnitchCommand(sublime_plugin.TextCommand):
             self.apply_blame(output)
 
     def apply_blame(self, results):
-        s = '[Snitch] Blame Results:\n{result}'.format(
+        s = '[Snitch Results]\n{result}'.format(
             result=results)
         self.view.run_command('snitch_set_panel_text', {'text': s})
